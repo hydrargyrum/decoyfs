@@ -92,7 +92,8 @@ db.execute(
             "size"  INTEGER,
             "mtime" INTEGER,
             "atime" INTEGER,
-            "ctime" INTEGER
+            "ctime" INTEGER,
+            PRIMARY KEY("dirname", "basename")
         );
     """
 )
