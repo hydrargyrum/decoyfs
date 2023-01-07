@@ -166,6 +166,8 @@ def main():
 
     server.parser.add_option(mountopt="dbpath")
     server.parse(values=server, errex=1)
+    if not server.dbpath:
+        server.parser.error("missing -o dbath=...")
 
     server.main()
 
