@@ -54,7 +54,7 @@ class Decoy(Fuse):
 
         for row in self.db.execute(
             "select * from files where basename = ? and dirname = ?",
-            (ppath.name, str(ppath.parent)),
+            (ppath.name, str(ppath.parent)[1:]),
         ):
             stat_kwargs = {
                 f"st_{field}": row[field] or 0
@@ -100,7 +100,7 @@ class Decoy(Fuse):
 
         for row in self.db.execute(
             "select rowid, basename, ino, mode from files where dirname = ?",
-            (str(ppath),),
+            (str(ppath)[1:],),
         ):
             if not row["basename"]:
                 continue

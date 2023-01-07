@@ -10,11 +10,9 @@ import sys
 
 def getrow(path, stat):
     relpath = path.relative_to(options.root)
-    relparent = relpath.parent
-    if relparent == Path("."):
-        parent = "/"
-    else:
-        parent = f"/{relparent}"
+    parent = str(relpath.parent)
+    if parent == ".":
+        parent = ""
 
     tup = (
         parent,
