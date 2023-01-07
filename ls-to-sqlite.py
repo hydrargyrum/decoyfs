@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: WTFPL
 
+from argparse import ArgumentParser
 import sqlite3
+import stat
 from pathlib import Path
-import sys
 
 
-def getrow(path):
-    try:
-        stat = path.lstat()
-    except FileNotFoundError:
-        return None
-
-    relpath = path.relative_to(root)
+def getrow(path, stat):
+    relpath = path.relative_to(options.root)
     parent = str(relpath.parent)
     if parent == ".":
         parent = ""
@@ -34,8 +30,8 @@ def getrow(path):
     return tuple(map(str, tup))
 
 
-def insert(path):
-    row = getrow(path)
+def insert(path, stat):
+    row = getrow(path, stat)
     if not row:
         return None
 
@@ -67,21 +63,41 @@ def recurse(path):
         return str(p.name).lower()
 
     for sub in sorted(path.iterdir(), key=sortkey):
-        insert(sub)
+        try:
+            statobj = sub.lstat()
+        except FileNotFoundError:
+            # TODO log error
+            continue
 
-        if not sub.is_symlink() and sub.is_dir():
-            recurse(sub)
+        insert(sub, statobj)
+
+        if stat.S_ISDIR(statobj.st_mode):
+            if not options.xdev or options.dev == statobj.st_dev:
+                recurse(sub)
 
 
-if len(sys.argv) > 2:
-    root = Path(sys.argv[2])
-else:
-    root = Path.cwd()
+def main():
+    global db, options
 
-db = sqlite3.connect(sys.argv[1])
+    parser = ArgumentParser()
+    parser.add_argument("dbpath")
+    parser.add_argument("root", nargs="?")
 
-db.execute(
-    """
+    parser.add_argument("-x", "--xdev", action="store_true")
+
+    options = parser.parse_args()
+
+    if options.root:
+        options.root = Path(options.root)
+    else:
+        options.root = Path.cwd()
+
+    options.root = options.root.resolve(strict=True)
+
+    db = sqlite3.connect(options.dbpath)
+
+    db.execute(
+        """
         CREATE TABLE "files" (
             "dirname"       TEXT,
             "basename"      TEXT,
@@ -96,10 +112,21 @@ db.execute(
             "ctime" INTEGER,
             PRIMARY KEY("dirname", "basename")
         );
-    """
-)
+        """
+    )
+
+    rootstat = options.root.lstat()
+    if options.xdev:
+        options.dev = rootstat.st_dev
+
+    insert(options.root, rootstat)
+    recurse(options.root)
+    db.commit()
 
 
-insert(root)
-recurse(root)
-db.commit()
+db = None
+options = None
+
+
+if __name__ == "__main__":
+    main()
