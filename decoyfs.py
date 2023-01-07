@@ -169,6 +169,8 @@ def main():
     if not server.dbpath:
         server.parser.error("missing -o dbath=...")
 
+    server.dbpath = Path(server.dbpath).resolve()
+
     server.main()
 
 
