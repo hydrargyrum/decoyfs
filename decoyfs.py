@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import print_function
-
 import os
 import errno
 from threading import Lock, local
@@ -10,8 +8,6 @@ import sqlite3
 
 import fuse
 from fuse import Fuse
-
-import snoop
 
 
 if not hasattr(fuse, "__version__"):
@@ -51,10 +47,8 @@ class Decoy(Fuse):
         self.tls.db.row_factory = sqlite3.Row
         return self.tls.db
 
-    @snoop
     def getattr(self, path):
         ppath = Path(path)
-        print(f"getattr basename={ppath.name} dirname={str(ppath.parent)[1:]}")
 
         for row in self.db.execute(
             "select * from files where basename = ? and dirname = ?",
@@ -83,14 +77,9 @@ class Decoy(Fuse):
     def xreadlink(self, path):
         return os.readlink("." + path)
 
-    @snoop
     def readdir(self, path, offset):
         ppath = Path(path)
 
-        # yield fuse.Direntry(".")
-        # yield fuse.Direntry("..")
-
-        print(f"readdir dirname={str(ppath)[1:]}")
         for row in self.db.execute(
             "select rowid, basename, ino, mode from files where dirname = ?",
             (str(ppath)[1:],),
@@ -104,50 +93,12 @@ class Decoy(Fuse):
                 type=row["mode"],
             )
 
-    """
-    def unlink(self, path):
-        raise NotImplementedError()
-
-    def rmdir(self, path):
-        raise NotImplementedError()
-
-    def symlink(self, path, path1):
-        raise NotImplementedError()
-
-    def rename(self, path, path1):
-        raise NotImplementedError()
-
-    def link(self, path, path1):
-        raise NotImplementedError()
-
-    def chmod(self, path, mode):
-        os.chmod("." + path, mode)
-
-    def chown(self, path, user, group):
-        os.chown("." + path, user, group)
-
-    def truncate(self, path, len):
-        f = open("." + path, "a")
-        f.truncate(len)
-        f.close()
-
-    def mknod(self, path, mode, dev):
-        os.mknod("." + path, mode, dev)
-
-    def mkdir(self, path, mode):
-        os.mkdir("." + path, mode)
-
-    def utime(self, path, times):
-        os.utime("." + path, times)
-
     #    The following utimens method would do the same as the above utime method.
     #    We can't make it better though as the Python stdlib doesn't know of
     #    subsecond preciseness in acces/modify times.
     #
     #    def utimens(self, path, ts_acc, ts_mod):
     #      os.utime("." + path, (ts_acc.tv_sec, ts_mod.tv_sec))
-
-    """
 
     def access(self, path, mode):
         # if not os.access("." + path, mode):
@@ -205,14 +156,11 @@ class Decoy(Fuse):
             return os.fstat(self.fd)
 
     def main(self, *a, **kw):
-
         # self.file_class = self.XmpFile
-
         return super().main(*a, **kw)
 
 
 def main():
-
     server = Decoy(dash_s_do="setsingle")
 
     server.parser.add_option(mountopt="dbpath")
