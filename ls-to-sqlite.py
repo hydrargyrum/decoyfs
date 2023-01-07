@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: WTFPL
 
 import sqlite3
 from pathlib import Path
