@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import sqlite3
 import stat
 from pathlib import Path
+import sys
 
 
 def getrow(path, stat):
@@ -62,11 +63,20 @@ def recurse(path):
         # not the best sort key but we don't need the perfect one
         return str(p.name).lower()
 
-    for sub in sorted(path.iterdir(), key=sortkey):
+    try:
+        listed = path.iterdir()
+    except OSError as exc:
+        # there are many reasons: permissions could be strict, item could
+        # have vanished, etc.
+        # those will always happen, we shouldn't exit for that
+        print(f"error listdir({sub}): {exc}", file=sys.stderr)
+        return
+
+    for sub in sorted(listed, key=sortkey):
         try:
             statobj = sub.lstat()
-        except FileNotFoundError:
-            # TODO log error
+        except OSError as exc:
+            print(f"error lstat({sub}): {exc}", file=sys.stderr)
             continue
 
         insert(sub, statobj)
