@@ -6,6 +6,7 @@ import errno
 from threading import Lock, local
 from pathlib import Path
 import sqlite3
+import stat
 
 import fuse
 from fuse import Fuse
@@ -72,6 +73,22 @@ class Decoy(Fuse):
             stat_kwargs["st_dev"] = 0
 
             return fuse.Stat(**stat_kwargs)
+
+        if path == "/":
+            # return a dummy entry if there was none in database
+            # else, the mountpoint will be hidden and harder to unmount
+            return fuse.Stat(
+                st_ino=1,
+                st_dev=0,
+                st_size=0,
+                st_mtime=0,
+                st_ctime=0,
+                st_atime=0,
+                st_nlink=1,
+                st_uid=os.getuid(),
+                st_gid=os.getgid(),
+                st_mode=stat.S_IFDIR | 0o500,
+            )
 
         return -errno.ENOENT
 
