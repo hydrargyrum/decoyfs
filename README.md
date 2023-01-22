@@ -79,3 +79,11 @@ CREATE TABLE "files" (
     PRIMARY KEY("dirname", "basename")
 );
 ```
+
+### catcli
+
+It's also possible to import [catcli](https://github.com/deadc0de6/catcli) databases:
+
+```
+import-catcli.py myfiles.sqlite myfiles.catcli
+```
