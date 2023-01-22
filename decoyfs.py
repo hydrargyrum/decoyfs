@@ -53,7 +53,7 @@ class Decoy(Fuse):
         ppath = Path(path)
 
         for row in self.db.execute(
-            "select * from files where basename = ? and dirname = ?",
+            "select *, rowid from files where basename = ? and dirname = ?",
             (ppath.name, str(ppath.parent)[1:]),
         ):
             stat_kwargs = {
@@ -70,6 +70,10 @@ class Decoy(Fuse):
                     "gid",
                 )
             }
+
+            if not stat_kwargs["st_ino"]:
+                stat_kwargs["st_ino"] = row["rowid"]
+
             stat_kwargs["st_dev"] = 0
 
             return fuse.Stat(**stat_kwargs)
@@ -107,7 +111,7 @@ class Decoy(Fuse):
 
             yield fuse.Direntry(
                 row["basename"],
-                ino=row["ino"],
+                ino=row["ino"] or row["rowid"],
                 type=row["mode"],
             )
 
@@ -180,8 +184,8 @@ class Decoy(Fuse):
 
 def main():
     server = Decoy(dash_s_do="setsingle")
-
     server.parser.add_option(mountopt="dbpath")
+
     server.parse(values=server, errex=1)
     if not server.dbpath:
         server.parser.error("missing -o dbath=...")
