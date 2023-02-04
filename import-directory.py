@@ -64,12 +64,12 @@ def recurse(path):
         return str(p.name).lower()
 
     try:
-        listed = path.iterdir()
+        listed = list(path.iterdir())
     except OSError as exc:
         # there are many reasons: permissions could be strict, item could
         # have vanished, etc.
         # those will always happen, we shouldn't exit for that
-        print(f"error listdir({sub}): {exc}", file=sys.stderr)
+        print(f"error listdir({path}): {exc}", file=sys.stderr)
         return
 
     for sub in sorted(listed, key=sortkey):
