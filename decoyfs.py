@@ -32,6 +32,21 @@ def flag2mode(flags):
     return m
 
 
+def decode_name_if_needed(s):
+    if isinstance(s, bytes):
+        return os.fsdecode(s)
+    return s
+
+
+def to_bytes_if_broken(s):
+    try:
+        s.encode("utf8")
+    except UnicodeError:
+        return s.encode("utf8", "surrogateescape")
+    else:
+        return s
+
+
 class Decoy(Fuse):
     def __init__(self, *args, **kw):
         Fuse.__init__(self, *args, **kw)
@@ -54,7 +69,7 @@ class Decoy(Fuse):
 
         for row in self.db.execute(
             "select *, rowid from files where basename = ? and dirname = ?",
-            (ppath.name, str(ppath.parent)[1:]),
+            (to_bytes_if_broken(ppath.name), to_bytes_if_broken(str(ppath.parent)[1:])),
         ):
             stat_kwargs = {
                 f"st_{field}": row[field] or 0
@@ -104,13 +119,13 @@ class Decoy(Fuse):
 
         for row in self.db.execute(
             "select rowid, basename, ino, mode from files where dirname = ?",
-            (str(ppath)[1:],),
+            (to_bytes_if_broken(str(ppath)[1:]),),
         ):
             if not row["basename"]:
                 continue
 
             yield fuse.Direntry(
-                row["basename"],
+                decode_name_if_needed(row["basename"]),
                 ino=row["ino"] or row["rowid"],
                 type=row["mode"],
             )

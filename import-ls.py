@@ -12,6 +12,15 @@ import stat
 import sys
 
 
+def to_bytes_if_broken(s):
+    try:
+        s.encode("utf8")
+    except UnicodeError:
+        return s.encode("utf8", "surrogateescape")
+    else:
+        return s
+
+
 def insert(parent, match):
     if match["iso"]:
         mtime = datetime.datetime.fromisoformat(match["iso"])
@@ -28,8 +37,8 @@ def insert(parent, match):
     mtime = calendar.timegm(mtime.timetuple())
 
     row = (
-        parent,
-        match["filename"],
+        to_bytes_if_broken(str(parent)),
+        to_bytes_if_broken(match["filename"]),
         parse_modeline(match["mode"]),
         int(match["ino"]),
         int(match["nlink"]),
@@ -40,8 +49,6 @@ def insert(parent, match):
         mtime,
         mtime,
     )
-
-    row = tuple(map(str, row))
 
     db.execute(
         """
@@ -137,7 +144,8 @@ db.execute(
 )
 
 lastpath = None
-for line in sys.stdin:
+for line in sys.stdin.buffer:
+    line = line.decode("utf8", "surrogateescape")
     line = line.rstrip()
 
     if ignore_line.fullmatch(line):

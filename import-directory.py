@@ -8,6 +8,15 @@ from pathlib import Path
 import sys
 
 
+def to_bytes_if_broken(s):
+    try:
+        s.encode("utf8")
+    except UnicodeError:
+        return s.encode("utf8", "surrogateescape")
+    else:
+        return s
+
+
 def getrow(path, stat):
     relpath = path.relative_to(options.root)
     parent = str(relpath.parent)
@@ -15,8 +24,8 @@ def getrow(path, stat):
         parent = ""
 
     tup = (
-        parent,
-        relpath.name,
+        to_bytes_if_broken(parent),
+        to_bytes_if_broken(relpath.name),
         stat.st_mode,
         stat.st_ino,
         stat.st_nlink,
@@ -28,7 +37,7 @@ def getrow(path, stat):
         stat.st_ctime,
     )
 
-    return tuple(map(str, tup))
+    return tup
 
 
 def insert(path, stat):
