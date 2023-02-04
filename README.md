@@ -53,10 +53,10 @@ bar  foo
 
 ## Generate the database
 
-The [ls-to-sqlite.py](ls-to-sqlite.py) tool can generate a SQLite database with the proper schema and fill it with entries from an actual directory:
+The [import-directory.py](import-directory.py) tool can generate a SQLite database with the proper schema and fill it with entries from an actual directory:
 
 ```
-ls-to-sqlite.py sample.sqlite real_folder/
+import-directory.py sample.sqlite real_folder/
 ```
 
 The format is pretty simple so it's easy to create another tool to create such a database from another source (tar archive, remote file system, etc.)
