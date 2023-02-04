@@ -16,9 +16,9 @@ def insert(parent, match):
     if match["iso"]:
         mtime = datetime.datetime.fromisoformat(match["iso"])
     elif match["recent"]:
-        mtime = datetime.datetime.strptime(match["recent"], "%b %e %H:%M")
+        mtime = datetime.datetime.strptime(match["recent"], "%b %d %H:%M")
     elif match["old"]:
-        mtime = datetime.datetime.strptime(match["old"], "%b %e %Y")
+        mtime = datetime.datetime.strptime(match["old"], "%b %d %Y")
 
     if match["dev"]:
         size = 0
