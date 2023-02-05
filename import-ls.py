@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: WTFPL
 
-# LANG=C ls -laniR <directory> | import-ls.py output.sqlite
+# LANG=C TZ=UTC ls -laniR <directory> | import-ls.py output.sqlite
 
 import calendar
 import datetime
