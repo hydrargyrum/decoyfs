@@ -25,7 +25,25 @@ def insert(parent, match):
     if match["iso"]:
         mtime = datetime.datetime.fromisoformat(match["iso"])
     elif match["recent"]:
-        mtime = datetime.datetime.strptime(match["recent"], "%b %d %H:%M")
+        # this format is used if mtime is in the last 6 months
+        # the year is missing, and so by default strptime will use 1900.
+        # we could accept that and compute the year afterwards, except it might
+        # fail for february 29th which did not exist in 1900.
+        # so we force a leap year at first in order to accept 02-09.
+        mtime = datetime.datetime.strptime(f'1904 {match["recent"]}', "%Y %b %d %H:%M")
+        # then we determine the appropriate year
+        today = datetime.date.today()
+        if today.month >= mtime.month >= today.month - 6:
+            # example: today=december[12] mtime=october[10]
+            mtime = mtime.replace(year=today.year)
+        elif mtime.month >= today.month + 6:
+            # example: today=january[1] mtime=november[11]
+            mtime = mtime.replace(year=today.year - 1)
+        else:
+            # example: today=october[10] mtime=december[12]
+            # this violates the POSIX requirements, assume anything
+            mtime = mtime.replace(year=today.year)
+
     elif match["old"]:
         mtime = datetime.datetime.strptime(match["old"], "%b %d %Y")
 
