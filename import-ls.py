@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: WTFPL
 
-# LANG=C TZ=UTC ls -laniR <directory> | import-ls.py output.sqlite
+# LANG=C TZ=UTC ls -laniR | import-ls.py output.sqlite
 
 import calendar
 import datetime
@@ -54,8 +54,12 @@ def insert(parent, match):
 
     mtime = calendar.timegm(mtime.timetuple())
 
+    parent = str(parent)
+    if parent == ".":
+        parent = ""
+
     row = (
-        to_bytes_if_broken(str(parent)),
+        to_bytes_if_broken(parent),
         to_bytes_if_broken(match["filename"]),
         parse_modeline(match["mode"]),
         int(match["ino"]),
