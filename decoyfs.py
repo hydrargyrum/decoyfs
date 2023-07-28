@@ -3,10 +3,10 @@
 
 import os
 import errno
-from threading import local
 from pathlib import Path
 import sqlite3
 import stat
+import sys
 
 import fuse
 from fuse import Fuse
@@ -38,21 +38,11 @@ def to_bytes_if_broken(s):
 
 
 class Decoy(Fuse):
-    def __init__(self, *args, **kw):
-        Fuse.__init__(self, *args, **kw)
-        self.dbpath = None
-        self.tls = local()
+    dbpath = None
 
     @property
     def db(self):
-        try:
-            return self.tls.db
-        except AttributeError:
-            pass
-
-        self.tls.db = sqlite3.connect(self.dbpath)
-        self.tls.db.row_factory = sqlite3.Row
-        return self.tls.db
+        return DB
 
     def getattr(self, path):
         ppath = Path(path)
@@ -161,6 +151,12 @@ class Decoy(Fuse):
 
 
 def main():
+    global DB
+
+    if sqlite3.threadsafety < 3:
+        # force single-threaded if sqlite doesn't serialize access
+        sys.argv.insert(1, "-s")
+
     server = Decoy(dash_s_do="setsingle")
     server.parser.add_option(mountopt="dbpath")
 
@@ -169,6 +165,8 @@ def main():
         server.parser.error("missing -o dbath=...")
 
     server.dbpath = Path(server.dbpath).resolve()
+    DB = sqlite3.connect(server.dbpath, check_same_thread=False)
+    DB.row_factory = sqlite3.Row
 
     server.main()
 
