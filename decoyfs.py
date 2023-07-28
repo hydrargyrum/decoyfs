@@ -3,7 +3,7 @@
 
 import os
 import errno
-from threading import Lock, local
+from threading import local
 from pathlib import Path
 import sqlite3
 import stat
@@ -20,16 +20,6 @@ if not hasattr(fuse, "__version__"):
 fuse.fuse_python_api = (0, 2)
 
 fuse.feature_assert("stateful_files", "has_init")
-
-
-def flag2mode(flags):
-    md = {os.O_RDONLY: "rb", os.O_WRONLY: "wb", os.O_RDWR: "wb+"}
-    m = md[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
-
-    if flags | os.O_APPEND:
-        m = m.replace("w", "a", 1)
-
-    return m
 
 
 def decode_name_if_needed(s):
@@ -166,34 +156,7 @@ class Decoy(Fuse):
     def fsinit(self):
         pass
 
-    class XmpFile(object):
-        def __init__(self, path, flags, *mode):
-            self.file = os.fdopen(os.open("." + path, flags, *mode), flag2mode(flags))
-            self.fd = self.file.fileno()
-            if hasattr(os, "pread"):
-                self.iolock = None
-            else:
-                self.iolock = Lock()
-
-        def read(self, length, offset):
-            if self.iolock:
-                self.iolock.acquire()
-                try:
-                    self.file.seek(offset)
-                    return self.file.read(length)
-                finally:
-                    self.iolock.release()
-            else:
-                return os.pread(self.fd, length, offset)
-
-        def release(self, flags):
-            self.file.close()
-
-        def fgetattr(self):
-            return os.fstat(self.fd)
-
     def main(self, *a, **kw):
-        # self.file_class = self.XmpFile
         return super().main(*a, **kw)
 
 
