@@ -3,6 +3,7 @@
 
 # LANG=C TZ=UTC ls -laniR | import-ls.py output.sqlite
 
+from argparse import ArgumentParser
 import calendar
 import datetime
 from pathlib import Path
@@ -144,7 +145,14 @@ entry_line = re.compile(r"""
 """, re.X)
 
 
-db = sqlite3.connect(sys.argv[1])
+parser = ArgumentParser(
+    description="Read `ls -lR` output from stdin and import it into decoyfs database."
+    + " Recommended command to pipe in is: LANG=C TZ=UTC ls -laniR",
+)
+parser.add_argument("dbpath", help="output database file")
+options = parser.parse_args()
+
+db = sqlite3.connect(options.dbpath)
 
 db.execute(
     """

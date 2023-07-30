@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: WTFPL
 # see https://github.com/deadc0de6/catcli
 
+from argparse import ArgumentParser
 import json
 import sqlite3
-import sys
 from stat import S_IFREG, S_IFDIR
 from os.path import dirname
 
@@ -42,7 +42,14 @@ def recurse(node, prefix):
             yield from recurse(child, prefix)
 
 
-db = sqlite3.connect(sys.argv[1])
+parser = ArgumentParser(
+    description="Transform a catcli database into a decoyfs database",
+)
+parser.add_argument("dbpath", help="output decoyfs database file")
+parser.add_argument("catclipath", help="input catcli database")
+args = parser.parse_args()
+
+db = sqlite3.connect(args.dbpath)
 
 db.execute(
     """
@@ -63,7 +70,7 @@ db.execute(
     """
 )
 
-with open(sys.argv[2]) as fp:
+with open(args.catclipath) as fp:
     catalog = json.load(fp)
     for row in recurse(catalog, ""):
         db.execute(

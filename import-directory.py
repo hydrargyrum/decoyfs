@@ -98,11 +98,17 @@ def recurse(path):
 def main():
     global db, options
 
-    parser = ArgumentParser()
-    parser.add_argument("dbpath")
-    parser.add_argument("root", nargs="?")
+    parser = ArgumentParser(
+        description="Scan a directory and snapshot its tree into a decoyfs database",
+    )
+    parser.add_argument("dbpath", help="output database file")
+    parser.add_argument("root", nargs="?", help="directory to scan recursively")
 
-    parser.add_argument("-x", "--xdev", action="store_true")
+    parser.add_argument(
+        "-x", "--xdev", action="store_true",
+        help="if set, don't scan subdirectories if they are not on the same filesystem."
+        + " Similar to `find -xdev` or `du -x`.",
+    )
 
     options = parser.parse_args()
 
