@@ -52,7 +52,7 @@ class Decoy(Fuse):
             (to_bytes_if_broken(ppath.name), to_bytes_if_broken(str(ppath.parent)[1:])),
         ):
             stat_kwargs = {
-                f"st_{field}": row[field] or 0
+                f"st_{field}": max(0, row[field] or 0)
                 for field in (
                     "ino",
                     "size",
