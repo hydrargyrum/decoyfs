@@ -6,6 +6,14 @@ import sqlite3
 import stat
 from pathlib import Path
 import sys
+import time
+
+
+try:
+    from termcolor import colored
+except ImportError:
+    def colored(s, *args, **kwargs):
+        return s
 
 
 def to_bytes_if_broken(s):
@@ -64,7 +72,40 @@ def insert(path, stat):
         row,
     )
 
+    progress.files += 1
+
     return True
+
+
+class Progress:
+    def __init__(self):
+        self.files = 0
+        self.dirs = 0
+        self.full_start = self.cycle_start = time.time()
+
+    def duration(self):
+        return int(time.time() - progress.full_start)
+
+    def try_print(self):
+        now = time.time()
+        if now - self.cycle_start > 2:
+            self.cycle_start = now
+            print(
+                f"Processed {self.dirs} dirs and {self.files} files in {self.duration()}s...",
+                file=sys.stderr, end="\r",
+            )
+            return True
+
+        return False
+
+    def print_end(self):
+        print(
+            colored(f"Finished in {self.duration()}s. Processed {self.dirs} dirs and {self.files} files.", "green"),
+            file=sys.stderr,
+        )
+
+
+progress = Progress()
 
 
 def recurse(path):
@@ -78,7 +119,7 @@ def recurse(path):
         # there are many reasons: permissions could be strict, item could
         # have vanished, etc.
         # those will always happen, we shouldn't exit for that
-        print(f"error listdir({path}): {exc}", file=sys.stderr)
+        print(colored(f"error listdir({path}): {exc}", "red"), file=sys.stderr)
         return
 
     for sub in sorted(listed, key=sortkey):
@@ -89,14 +130,18 @@ def recurse(path):
             continue
 
         insert(sub, statobj)
+        progress.try_print()
 
         if stat.S_ISDIR(statobj.st_mode):
             if not options.xdev or options.dev == statobj.st_dev:
                 recurse(sub)
 
+    progress.dirs += 1
+    progress.try_print()
+
 
 def main():
-    global db, options
+    global db, options, progress
 
     parser = ArgumentParser(
         description="Scan a directory and snapshot its tree into a decoyfs database",
@@ -140,6 +185,7 @@ def main():
         """
     )
 
+    progress = Progress()
     rootstat = options.root.lstat()
     if options.xdev:
         options.dev = rootstat.st_dev
@@ -147,6 +193,8 @@ def main():
     insert(options.root, rootstat)
     recurse(options.root)
     db.commit()
+
+    progress.print_end()
 
 
 db = None
