@@ -4,13 +4,20 @@
 from argparse import ArgumentParser
 import sqlite3
 import stat
+import os
 from pathlib import Path
 import sys
 import time
 
 
 try:
-    from termcolor import colored
+    from termcolor import colored as _colored
+
+    def colored(s, *args, **kwargs):
+        if os.environ.get("NO_COLOR"):
+            return s
+        return _colored(s, *args, **kwargs)
+
 except ImportError:
     def colored(s, *args, **kwargs):
         return s
