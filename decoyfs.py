@@ -165,6 +165,10 @@ def main():
         server.parser.error("missing -o dbath=...")
 
     server.dbpath = Path(server.dbpath).resolve()
+    # detailed info in /etc/mtab
+    server.fuse_args.add("fsname", server.dbpath)
+    server.fuse_args.add("subtype", "decoyfs")
+
     DB = sqlite3.connect(server.dbpath, check_same_thread=False)
     DB.row_factory = sqlite3.Row
 
