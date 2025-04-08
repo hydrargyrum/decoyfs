@@ -1,0 +1,25 @@
+variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    PYTHONDEVMODE: "1"
+    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+    SLSA_PROVENANCE_SCHEMA_VERSION: "v1"
+
+cache:
+    paths:
+        - ".cache/pip"
+
+default:
+    image: "docker.io/python:3"
+
+lint:
+    stage: "test"
+    script:
+        - "pip install flake8"
+        - "flake8 . --max-line-length 120"
+
+test:
+    stage: "test"
+    script:
+        - "apt-get update && apt-get install -y --no-install-recommends fuse3 libfuse-dev"
+        - "pip install pytest fuse-python"
+        - "pytest tests"

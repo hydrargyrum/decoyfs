@@ -191,7 +191,6 @@ for line in sys.stdin.buffer:
 
     if match["filename"] in (".", ".."):
         continue
-    #print(lastpath, match["filename"])
 
     try:
         insert(lastpath, match)

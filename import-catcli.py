@@ -11,8 +11,8 @@ from os.path import dirname
 
 def recurse(node, prefix):
     if node["type"] == "top":
-        #for child in node["children"][0]:
-        #	yield from recurse(child, "")
+        # for child in node["children"][0]:
+        #    yield from recurse(child, "")
         yield from recurse(node["children"][0], "")
         return
 
