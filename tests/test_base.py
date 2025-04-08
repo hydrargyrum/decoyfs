@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 
-srcpath = Path(__file__).parent.resolve()
+srcpath = Path(__file__).parent.parent.resolve()
 
 
 @pytest.fixture()
@@ -21,10 +21,10 @@ def mount(tmp_path):
 
 
 def do_mount(db_filename, target):
-    subprocess.check_call([f"{srcpath.parent}/decoyfs.py", "-o", f"dbpath={srcpath}/{db_filename}", target])
+    subprocess.check_call([f"{srcpath}/decoyfs.py", "-o", f"dbpath={srcpath}/{db_filename}", target])
 
 
-def test_foo(mount):
+def test_basic(mount):
     mount("sample.sqlite")
     assert list(os.walk(mount.path)) == [
         (f"{mount.path}", ["bar", "foo"], []),
