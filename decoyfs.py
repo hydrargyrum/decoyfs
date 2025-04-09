@@ -169,7 +169,7 @@ def main():
     server.fuse_args.add("fsname", server.dbpath)
     server.fuse_args.add("subtype", "decoyfs")
 
-    DB = sqlite3.connect(server.dbpath, check_same_thread=False)
+    DB = sqlite3.connect(f"file:{server.dbpath}?mode=ro", check_same_thread=False)
     DB.row_factory = sqlite3.Row
 
     server.main()
