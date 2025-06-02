@@ -149,6 +149,11 @@ parser = ArgumentParser(
     description="Read `ls -lR` output from stdin and import it into decoyfs database."
     + " Recommended command to pipe in is: LANG=C TZ=UTC ls -laniR",
 )
+parser.add_argument(
+    "--strip-prefix", metavar="PREFIX",
+    help="Remove prefix path from all path (typically if `ls -lR PREFIX` was used"
+    + ", then PREFIX must be removed)",
+)
 parser.add_argument("dbpath", help="output database file")
 options = parser.parse_args()
 
@@ -183,7 +188,18 @@ for line in sys.stdin.buffer:
 
     match = path_line.fullmatch(line)
     if match:
-        lastpath = Path(match[1])
+        path_str = match[1]
+
+        if lastpath is None and "/" in path_str and not options.strip_prefix:
+            print(
+                f"warning: the first path entry seems to include a prefix, consider using --strip-prefix={path_str!r}",
+                file=sys.stderr,
+            )
+
+        if options.strip_prefix:
+            path_str = path_str.removeprefix(options.strip_prefix)
+        path_str = path_str.lstrip("/")
+        lastpath = Path(path_str)
         continue
 
     match = entry_line.fullmatch(line)
@@ -195,6 +211,6 @@ for line in sys.stdin.buffer:
     try:
         insert(lastpath, match)
     except sqlite3.IntegrityError as exc:
-        print(f"could not insert({lastpath}/{match['filename']}): {exc}", file=sys.stderr)
+        print(f"error: could not insert({lastpath}/{match['filename']}): {exc}", file=sys.stderr)
 
 db.commit()
