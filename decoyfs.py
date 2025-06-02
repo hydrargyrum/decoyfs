@@ -153,8 +153,9 @@ class Decoy(Fuse):
 def main():
     global DB
 
-    if sqlite3.threadsafety < 3:
-        # force single-threaded if sqlite doesn't serialize access
+    if "-s" not in sys.argv:
+        # for some reason, there are many errors when using multiple threads
+        # even if using thread-local connections
         sys.argv.insert(1, "-s")
 
     server = Decoy(dash_s_do="setsingle")
@@ -169,7 +170,7 @@ def main():
     server.fuse_args.add("fsname", server.dbpath)
     server.fuse_args.add("subtype", "decoyfs")
 
-    DB = sqlite3.connect(f"file:{server.dbpath}?mode=ro", check_same_thread=False)
+    DB = sqlite3.connect(f"file:{server.dbpath}?mode=ro")
     DB.row_factory = sqlite3.Row
 
     server.main()
